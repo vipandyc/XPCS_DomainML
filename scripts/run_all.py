@@ -23,13 +23,6 @@ from inference import (
     iter_result_csvs as iter_phase_diagram_result_csvs,
     plot_phase_diagrams as inference_plot_phase_diagrams,
 )
-from train_adv import (
-    XPCSDataset as XPCSDatasetWithT,
-    XPCSNet,
-    denorm_from_meta as denorm_from_meta_with_t,
-    load_model as load_adv_model,
-    train as train_adv_model,
-)
 from train_adv_no_T import (
     INPUT_MEAN as INPUT_MEAN_NO_T,
     INPUT_STD as INPUT_STD_NO_T,
@@ -49,15 +42,10 @@ from train_adv_coral_surrogate import (
     load_model as load_coral_surrogate_model_no_t,
     train as train_coral_surrogate_model_no_t,
 )
-from train_vanilla import (
-    VanillaXPCSNet,
-    load_model as load_vanilla_model,
-    set_global_seed as set_vanilla_global_seed,
-    train as train_vanilla_model,
-)
 from train_vanilla_no_T import (
     VanillaXPCSNet as VanillaXPCSNetNoT,
     load_model as load_vanilla_model_no_t,
+    set_global_seed as set_vanilla_global_seed,
     train as train_vanilla_model_no_t,
 )
 from utils import (
@@ -82,8 +70,8 @@ MODEL_SELECTION_CHOICES = [
     "coral-surrogate",
     "none",
 ]
-VanillaModel = VanillaXPCSNet | VanillaXPCSNetNoT
-AdvModel = XPCSNet | XPCSNetNoT | XPCSNetCoralNoT | XPCSNetCoralSurrogateNoT
+VanillaModel = VanillaXPCSNetNoT
+AdvModel = XPCSNetNoT | XPCSNetCoralNoT | XPCSNetCoralSurrogateNoT
 
 
 def resolve_vanilla_components(
@@ -95,19 +83,18 @@ def resolve_vanilla_components(
     """
     if no_t:
         return VanillaXPCSNetNoT, train_vanilla_model_no_t, load_vanilla_model_no_t
-    return VanillaXPCSNet, train_vanilla_model, load_vanilla_model
+    raise ValueError("The legacy temperature-input vanilla model has been removed.")
 
 
 def resolve_adv_components(
     no_t: bool,
 ) -> tuple[type[AdvModel], object, object]:
     """
-    Resolve the adversarial model class and train/load functions for the
-    selected temperature-input setting.
+    Resolve the adversarial model class and train/load functions.
     """
     if no_t:
         return XPCSNetNoT, train_adv_model_no_t, load_adv_model_no_t
-    return XPCSNet, train_adv_model, load_adv_model
+    raise ValueError("The legacy temperature-input adversarial model has been removed.")
 
 
 def resolve_coral_components(
@@ -118,7 +105,7 @@ def resolve_coral_components(
     """
     if no_t:
         return XPCSNetCoralNoT, train_coral_model_no_t, load_coral_model_no_t
-    raise NotImplementedError("CORAL training with T not yet implemented")
+    raise ValueError("Legacy temperature-input CORAL training has been removed.")
 
 
 def resolve_coral_surrogate_components(
@@ -133,7 +120,7 @@ def resolve_coral_surrogate_components(
             train_coral_surrogate_model_no_t,
             load_coral_surrogate_model_no_t,
         )
-    raise NotImplementedError("CORAL surrogate training with T not yet implemented")
+    raise ValueError("Legacy temperature-input CORAL surrogate training has been removed.")
 
 
 def resolve_eval_dataset_components(
@@ -145,7 +132,7 @@ def resolve_eval_dataset_components(
     """
     if no_t:
         return XPCSDatasetNoT, denorm_from_meta_no_t
-    return XPCSDatasetWithT, denorm_from_meta_with_t
+    raise ValueError("The legacy temperature-input evaluation dataset has been removed.")
 
 
 @dataclass
@@ -431,9 +418,10 @@ def parse_args() -> argparse.Namespace:
         "--no-T",
         dest="no_t",
         action="store_true",
+        default=True,
         help=(
-            "Use the no-temperature model variants from `train_vanilla_no_T.py` "
-            "and `train_adv_no_T.py`."
+            "Use the no-temperature model variants. This is now the only "
+            "supported model family."
         ),
     )
     parser.add_argument("--batch-size", type=int, default=32)
@@ -1969,7 +1957,7 @@ def run_training(args: argparse.Namespace) -> tuple[VanillaModel | None, AdvMode
     if args.train_models == "coral":
         print("[train] training CORAL + distillation model")
         if not args.no_t:
-            raise NotImplementedError("CORAL training with T not yet implemented")
+            raise ValueError("Legacy temperature-input CORAL training has been removed.")
         coral_model_class, coral_train_fn, _ = resolve_coral_components(args.no_t)
         coral_init_state_dict = None
         if args.coral_init_model_path is not None:
@@ -2040,7 +2028,7 @@ def run_training(args: argparse.Namespace) -> tuple[VanillaModel | None, AdvMode
     if args.train_models == "coral-surrogate":
         print("[train] training CORAL + surrogate model")
         if not args.no_t:
-            raise NotImplementedError("CORAL surrogate training with T not yet implemented")
+            raise ValueError("Legacy temperature-input CORAL surrogate training has been removed.")
         coral_model_class, coral_train_fn, _ = resolve_coral_surrogate_components(args.no_t)
         coral_init_state_dict = None
         if args.coral_init_model_path is not None:

@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments and local config
+.venv/
+venv/
+.env
+.env.*
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Training outputs
+models/
+runs/
+results/
+inference_outputs/
+inference_results*/
+dataset/experiment/
+dataset/experiment_eval_cache/
+dataset/simulation/
+dataset/simulation_2/
+
+# Large/raw local data
+exp_data/
+*.pt
+*.pth
+*.ckpt
+*.npz
+*.npy
+
+# System/editor noise
+.DS_Store
+*.swp
+*.swo

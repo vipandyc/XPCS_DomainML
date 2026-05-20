@@ -38,7 +38,7 @@ PREDICTION_SMOOTH_L1_WEIGHT = 0.25
 
 """
 The goal is to provide a comparison baseline using a vanilla CNN model without
-domain adaptation. The code structure is similar to train_adv.py but without the
+domain adaptation. The code structure is similar to train_adv_no_T.py but without the
 domain discriminator and adversarial training.
 The network is comprised of only two parts:
 1. A feature extractor (CNN) that extracts features from input data.

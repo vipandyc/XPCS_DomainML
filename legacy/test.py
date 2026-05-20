@@ -2,7 +2,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import sys
 from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
+
 from tqdm import tqdm
 from produce_data import simulate_xpcs, normalize_g2
 from utils import (
@@ -11,8 +16,8 @@ from utils import (
     calc_umap, calc_pca, nonequilibrium_measure, plot_nonequilibrium_distribution,
     plot_nonequilibrium_distribution_v2
 )
-from train_adv import XPCSDataset, XPCSNet
-from train_vanilla import VanillaXPCSNet
+from train_adv_no_T import XPCSDataset, XPCSNet
+from train_vanilla_no_T import VanillaXPCSNet
 
 if __name__ == "__main__":
     # gamma = 3e18

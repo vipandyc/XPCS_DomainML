@@ -1,8 +1,13 @@
 import json
 import math
+import sys
 import time
 from typing import List, Tuple, Dict, Union, Optional, Any
 from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
+
 import numpy as np
 import pandas as pd
 import torch

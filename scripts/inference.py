@@ -110,12 +110,8 @@ def infer_no_t_from_checkpoint_name(
     model_type: str,
 ) -> bool:
     """Infer whether a checkpoint uses the no-temperature model variant."""
-    if model_type in {"coral", "coral-surrogate"}:
-        return True
-    if model_path is None:
-        return False
-    lowered = model_path.name.lower()
-    return ("no_t" in lowered) or ("no-t" in lowered)
+    del model_path, model_type
+    return True
 
 
 def resolve_model_components(
@@ -125,35 +121,23 @@ def resolve_model_components(
 ) -> tuple[object, object, bool]:
     """Resolve the checkpoint loader and de-normalization helper."""
     resolved_no_t = infer_no_t_from_checkpoint_name(model_path, model_type) if no_t is None else no_t
+    if not resolved_no_t:
+        raise ValueError("Legacy temperature-input checkpoints have been removed.")
 
     if model_type == "vanilla":
-        if resolved_no_t:
-            from train_vanilla_no_T import (
-                denorm_from_meta as denorm_from_meta_vanilla_no_t,
-                load_model as load_vanilla_model_no_t,
-            )
-
-            return load_vanilla_model_no_t, denorm_from_meta_vanilla_no_t, True
-        from train_vanilla import (
-            denorm_from_meta as denorm_from_meta_vanilla_with_t,
-            load_model as load_vanilla_model,
+        from train_vanilla_no_T import (
+            denorm_from_meta as denorm_from_meta_vanilla_no_t,
+            load_model as load_vanilla_model_no_t,
         )
 
-        return load_vanilla_model, denorm_from_meta_vanilla_with_t, False
+        return load_vanilla_model_no_t, denorm_from_meta_vanilla_no_t, True
     if model_type == "adv":
-        if resolved_no_t:
-            from train_adv_no_T import (
-                denorm_from_meta as denorm_from_meta_adv_no_t,
-                load_model as load_adv_model_no_t,
-            )
-
-            return load_adv_model_no_t, denorm_from_meta_adv_no_t, True
-        from train_adv import (
-            denorm_from_meta as denorm_from_meta_adv_with_t,
-            load_model as load_adv_model,
+        from train_adv_no_T import (
+            denorm_from_meta as denorm_from_meta_adv_no_t,
+            load_model as load_adv_model_no_t,
         )
 
-        return load_adv_model, denorm_from_meta_adv_with_t, False
+        return load_adv_model_no_t, denorm_from_meta_adv_no_t, True
     if model_type == "coral":
         if not resolved_no_t:
             raise ValueError("CORAL checkpoints are only supported for the no-T model variant")
@@ -187,9 +171,7 @@ def resolve_sim_dataset_class(no_t: bool):
         from train_adv_no_T import XPCSDataset as XPCSDatasetNoT
 
         return XPCSDatasetNoT
-    from train_adv import XPCSDataset as XPCSDatasetWithT
-
-    return XPCSDatasetWithT
+    raise ValueError("Legacy temperature-input simulation datasets have been removed.")
 
 
 def load_simulation_manifest(sim_root: Path) -> pd.DataFrame:
@@ -1274,18 +1256,11 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Optional checkpoint path. Defaults to the most recent checkpoint of the requested type.",
     )
-    infer_temp_group = infer_sim_parser.add_mutually_exclusive_group()
-    infer_temp_group.add_argument(
+    infer_sim_parser.add_argument(
         "--no-t",
         dest="no_t",
         action="store_true",
         help="Force the no-temperature checkpoint variant.",
-    )
-    infer_temp_group.add_argument(
-        "--with-t",
-        dest="no_t",
-        action="store_false",
-        help="Force the temperature-input checkpoint variant.",
     )
     infer_sim_parser.set_defaults(no_t=None)
     infer_sim_parser.add_argument(
